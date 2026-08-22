@@ -74,6 +74,9 @@ export default function pLimit(concurrency) {
 		pendingCount: {
 			get: () => queue.size,
 		},
+		isIdle: {
+			get: () => activeCount === 0 && queue.size === 0,
+		},
 		clearQueue: {
 			value() {
 				if (!rejectOnClear) {

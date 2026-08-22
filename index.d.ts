@@ -10,6 +10,11 @@ export type LimitFunction = {
 	readonly pendingCount: number;
 
 	/**
+	Returns `true` if no promises are running or waiting to run.
+	*/
+	readonly isIdle: boolean;
+
+	/**
 	Get or set the concurrency limit.
 	*/
 	concurrency: number;

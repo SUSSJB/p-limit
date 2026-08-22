@@ -181,6 +181,30 @@ test('activeCount and pendingCount properties', async t => {
 	t.is(limit.pendingCount, 0);
 });
 
+test('isIdle is true in the initial state', t => {
+	const limit = pLimit(5);
+	t.is(limit.activeCount, 0);
+	t.is(limit.pendingCount, 0);
+	t.true(limit.isIdle);
+});
+
+test('isIdle property', async t => {
+	const limit = pLimit(5);
+	t.true(limit.isIdle);
+
+	const runningPromise = limit(() => delay(100));
+	t.false(limit.isIdle);
+
+	await runningPromise;
+	t.true(limit.isIdle);
+
+	const promises = Array.from({length: 3}, () => limit(() => delay(100)));
+	t.false(limit.isIdle);
+
+	await Promise.all(promises);
+	t.true(limit.isIdle);
+});
+
 test('clearQueue', async t => {
 	const limit = pLimit(1);
 
