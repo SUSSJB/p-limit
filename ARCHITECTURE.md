@@ -26,3 +26,5 @@ This project is a JavaScript application that benchmarks and limits the executio
 
 ## Closing Note
 New tickets are appended below this line as components are implemented.
+## General
+- **PRODPLIMIT-2** Implement isIdle getter — index.js (function pLimit; function limitFunction), index.d.ts (type LimitFunction; function pLimit; type Options; function limitFunction), test.js
