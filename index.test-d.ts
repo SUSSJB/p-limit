@@ -17,6 +17,7 @@ expectType<Promise<string>>(limit(async (_a: string, _b: number) => '', 'test', 
 
 expectType<number>(limit.activeCount);
 expectType<number>(limit.pendingCount);
+expectType<boolean>(limit.isIdle);
 
 expectType<void>(limit.clearQueue());
 expectType<void>(limitWithRejectOnClear.clearQueue());

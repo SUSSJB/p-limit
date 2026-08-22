@@ -181,6 +181,115 @@ test('activeCount and pendingCount properties', async t => {
 	t.is(limit.pendingCount, 0);
 });
 
+test('isIdle is true in the initial state', t => {
+	const limit = pLimit(5);
+	t.is(limit.activeCount, 0);
+	t.is(limit.pendingCount, 0);
+	t.true(limit.isIdle);
+});
+
+test('isIdle property', async t => {
+	const limit = pLimit(5);
+	t.true(limit.isIdle);
+
+	const runningPromise = limit(() => delay(100));
+	t.false(limit.isIdle);
+
+	await runningPromise;
+	t.true(limit.isIdle);
+
+	const promises = Array.from({length: 3}, () => limit(() => delay(100)));
+	t.false(limit.isIdle);
+
+	await Promise.all(promises);
+	t.true(limit.isIdle);
+});
+
+test('isIdle with options object instantiation', t => {
+	const limit = pLimit({concurrency: 2});
+	t.true(limit.isIdle);
+});
+
+test('isIdle remains false until all queued tasks complete', async t => {
+	const limit = pLimit(1);
+
+	const first = limit(() => delay(50));
+	const second = limit(() => delay(50));
+
+	t.false(limit.isIdle);
+
+	await first;
+	// Second task is still queued or running
+	t.false(limit.isIdle);
+
+	await second;
+	t.true(limit.isIdle);
+});
+
+test('isIdle becomes true again after a task rejects', async t => {
+	const limit = pLimit(2);
+	const error = new Error('🦄');
+
+	await t.throwsAsync(limit(async () => {
+		throw error;
+	}), {is: error});
+
+	t.true(limit.isIdle);
+});
+
+test('isIdle is false while a task is active after clearing the queue', async t => {
+	const limit = pLimit(1);
+
+	const runningPromise = limit(() => delay(100));
+	limit(() => delay(10));
+
+	await Promise.resolve();
+	t.is(limit.pendingCount, 1);
+	t.false(limit.isIdle);
+
+	limit.clearQueue();
+	t.is(limit.pendingCount, 0);
+	// One task is still active
+	t.false(limit.isIdle);
+
+	await runningPromise;
+	t.true(limit.isIdle);
+});
+
+test('independent limiters have independent isIdle state', async t => {
+	const first = pLimit(1);
+	const second = pLimit(1);
+
+	t.true(first.isIdle);
+	t.true(second.isIdle);
+
+	const runningPromise = first(() => delay(50));
+
+	t.false(first.isIdle);
+	t.true(second.isIdle);
+
+	await runningPromise;
+
+	t.true(first.isIdle);
+	t.true(second.isIdle);
+});
+
+test('isIdle reflects dynamically increased concurrency', async t => {
+	const limit = pLimit(1);
+
+	const promises = [
+		limit(() => delay(100)),
+		limit(() => delay(100)),
+	];
+
+	t.false(limit.isIdle);
+
+	limit.concurrency = 2;
+
+	await Promise.all(promises);
+	t.true(limit.isIdle);
+});
+
 test('clearQueue', async t => {
 	const limit = pLimit(1);
 
